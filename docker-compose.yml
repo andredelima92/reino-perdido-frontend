@@ -1,0 +1,13 @@
+version: "3.8"
+
+services:
+  reino-perdido-frontend:
+    container_name: reino-perdido-frontend
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/usr/src/app
+    tty: true
