@@ -1,52 +1,56 @@
+import { cursors } from "@/helpers/cursor";
 import Image from "next/image";
+import { useEffect, useMemo, useState } from "react";
+import fields from "../helpers/map.json";
 
-export const WalkDirections: React.FC = () => {
-  function move(direction: string) {
-    alert(direction);
+type WalkDirectionsProps = {
+  updateImageField: (field: string) => void;
+};
+
+type NearPositions = {
+  up: number | null;
+  left: number | null;
+  right: number | null;
+  down: number | null;
+};
+
+export const WalkDirections: React.FC<WalkDirectionsProps> = ({ updateImageField }) => {
+  const [currentPosition, setCurrentPosition] = useState(1);
+  const [nextPositions, setNextPositions] = useState<NearPositions>({} as NearPositions);
+
+  useEffect(() => {
+    const currentField = fields.maps.find((item) => item.position === currentPosition);
+    if (!currentField) return;
+
+    setNextPositions(currentField.near_positions);
+    updateImageField(currentField.image);
+  }, [currentPosition, updateImageField]);
+
+  function move(direction: number | null) {
+    setCurrentPosition(direction as number);
   }
 
   return (
     <div className="grid grid-cols-3 gap-4">
-      <div className="col-span-3 flex justify-center">
-        <Image
-          src="arrow-up.svg"
-          width="40"
-          height="40"
-          alt="arrow up"
-          className="cursor-pointer"
-          onClick={() => move("up")}
-        />
-      </div>
-      <div className="col-span-2 flex justify-start">
-        <Image
-          src="arrow-left.svg"
-          width="40"
-          height="40"
-          alt="arrow left"
-          className="cursor-pointer"
-          onClick={() => move("left")}
-        />
-      </div>
-      <div className="flex justify-end">
-        <Image
-          src="arrow-right.svg"
-          width="40"
-          height="40"
-          alt="arrow right"
-          className="cursor-pointer"
-          onClick={() => move("right")}
-        />
-      </div>
-      <div className="col-span-3 flex justify-center">
-        <Image
-          src="arrow-down.svg"
-          width="40"
-          height="40"
-          alt="arrow down"
-          className="cursor-pointer"
-          onClick={() => move("down")}
-        />
-      </div>
+      {cursors.map((item) => {
+        const command = item.command as "up" | "down" | "left" | "right";
+        const nextField = nextPositions[command];
+
+        if (nextField) {
+          return (
+            <div className={item.class} key={item.command}>
+              <Image
+                src={item.src}
+                width="40"
+                height="40"
+                alt={item.alt}
+                className="cursor-pointer"
+                onClick={() => move(nextPositions[command])}
+              />
+            </div>
+          );
+        }
+      })}
     </div>
   );
 };
