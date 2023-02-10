@@ -1,10 +1,16 @@
 import { cursors } from "@/helpers/cursor";
+import { api } from "@/services/api";
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
-import fields from "../helpers/map.json";
+import { useEffect, useState } from "react";
 
 type WalkDirectionsProps = {
   updateImageField: (field: string) => void;
+};
+
+export type Maps = {
+  position: number;
+  image: string;
+  near_positions: NearPositions;
 };
 
 type NearPositions = {
@@ -17,14 +23,28 @@ type NearPositions = {
 export const WalkDirections: React.FC<WalkDirectionsProps> = ({ updateImageField }) => {
   const [currentPosition, setCurrentPosition] = useState(1);
   const [nextPositions, setNextPositions] = useState<NearPositions>({} as NearPositions);
+  const [fields, setFields] = useState<Maps[]>([]);
 
   useEffect(() => {
-    const currentField = fields.maps.find((item) => item.position === currentPosition);
+    const currentField = fields.find((item) => item.position === currentPosition);
     if (!currentField) return;
 
     setNextPositions(currentField.near_positions);
     updateImageField(currentField.image);
-  }, [currentPosition, updateImageField]);
+  }, [currentPosition, updateImageField, fields]);
+
+  async function getMaps() {
+    try {
+      const { data } = await api.get("/");
+      setFields(data);
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  useEffect(() => {
+    getMaps();
+  }, []);
 
   function move(direction: number | null) {
     setCurrentPosition(direction as number);
