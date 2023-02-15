@@ -1,7 +1,7 @@
 import { cursors } from "@/helpers/cursor";
-import { api } from "@/services/api";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { useSocket } from "@/context/socket";
 
 type WalkDirectionsProps = {
   updateImageField: (field: string) => void;
@@ -24,6 +24,7 @@ export const WalkDirections: React.FC<WalkDirectionsProps> = ({ updateImageField
   const [currentPosition, setCurrentPosition] = useState(1);
   const [nextPositions, setNextPositions] = useState<NearPositions>({} as NearPositions);
   const [fields, setFields] = useState<Maps[]>([]);
+  const { socket } = useSocket();
 
   useEffect(() => {
     const currentField = fields.find((item) => item.position === currentPosition);
@@ -33,21 +34,16 @@ export const WalkDirections: React.FC<WalkDirectionsProps> = ({ updateImageField
     updateImageField(currentField.image);
   }, [currentPosition, updateImageField, fields]);
 
-  async function getMaps() {
-    try {
-      const { data } = await api.get("/");
-      setFields(data);
-    } catch (err) {
-      console.log(err);
-    }
-  }
-
   useEffect(() => {
-    getMaps();
-  }, []);
+    socket.emit("getMaps", (data: Maps[]) => {
+      setFields(data);
+    });
+  }, [socket]);
 
   function move(direction: number | null) {
-    setCurrentPosition(direction as number);
+    socket.emit("move", direction, (data: Maps) => {
+      setCurrentPosition(direction as number);
+    });
   }
 
   return (
